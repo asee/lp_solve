@@ -1,0 +1,15 @@
+This LPSolve interface library uses DL to dynamically load the LPSolve library.  It will look for the library in the lib/binaries folder, and searches
+for the first library it can load in this order:
+
+liblpsolve55.dylib
+liblpsolve55.dylib-ppc
+liblpsolve55.dylib.x86-64
+liblpsolve55.so
+liblpsolve55.so-ux64
+lpsolve55.dll
+
+
+You can download and compile the liblpsolve library from http://sourceforge.net/projects/lpsolve/
+
+NOTE:  As this started as an internal project, only support for binary variable types is supported.  It sounds not-functional, but it fit my purposes.
+For example, to get the lowest cost fruit salad which has at least one fruit everyone likes look at demo.rb

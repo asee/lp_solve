@@ -1,0 +1,27 @@
+/* 201109131522 */
+
+/* Objective function */
+min: +5 pineapple +6 cherry +0.89 orange +4.45 mango +4.3 watermelon +0.3 bananna +apple +3.49 kiwi +2.4 grapes
+ +3 strawberry +1.4 pear +5.5 blueberry;
+
+/* Constraints */
+alice_picks: +strawberry +blueberry >= 1;
+bob_picks: +pineapple +mango +kiwi <= 2;
+carol_picks: +bananna +apple +grapes = 2;
+
+/* Variable bounds */
+pineapple <= 1;
+cherry <= 1;
+orange <= 1;
+mango <= 1;
+watermelon <= 1;
+bananna <= 1;
+apple <= 1;
+kiwi <= 1;
+grapes <= 1;
+strawberry <= 1;
+pear <= 1;
+blueberry <= 1;
+
+/* Integer definitions */
+int pineapple,cherry,orange,mango,watermelon,bananna,apple,kiwi,grapes,strawberry,pear,blueberry;
