@@ -1,5 +1,7 @@
 require 'init.rb'
 
+print "USING LP SOLVE VERSION #{LPSolve.version} to make a fruit salad.\n"
+
 # The idea here is to make a fruit salad that everyone will enjoy, for the lowest cost possible.
 # Contrived, but illustrates the use of boolean variables and constraints for making choices.
 
