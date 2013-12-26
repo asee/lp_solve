@@ -1,6 +1,6 @@
 require "lp_select/version"
 
-module MassiveMatch
-  require 'lp_select/lp_select.rb'
+module LpSelect
   require 'lp_select/lp_solve.rb'
+  require 'lp_select/lp_select.rb'
 end
