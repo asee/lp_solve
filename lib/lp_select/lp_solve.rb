@@ -13,7 +13,7 @@ require 'dl/struct'
 # -----------------------------------------------
 
 module LPSolve
-  extend DL::Importable
+  extend DL::Importer
   base = File.expand_path(File.join( File.dirname(__FILE__), "binaries") )
   err = nil
   ["liblpsolve55.so", "liblpsolve55.so-ux64", "liblpsolve55.dylib", "liblpsolve55.dylib.x86-64", "liblpsolve55.dylib-ppc", "lpsolve55.dll"].each do |lib|
