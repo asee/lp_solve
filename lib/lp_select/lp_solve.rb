@@ -60,51 +60,51 @@ module LPSolve
   FEASFOUND = 12
   NOFEASFOUND = 13
 
-	# used where we pass a pointer to a long which gets modified in the call
+  # used where we pass a pointer to a long which gets modified in the call
   # and where we need to actually read the modified value within Ruby
   IntArg = struct [
       "int val"
   ]
 
-	#Hold the C pointer to the lprec
-	typealias("lprec*", "long")
-	
-	#The lp_solve API also defines this alias
+  #Hold the C pointer to the lprec
+  typealias("lprec*", "long")
+  
+  #The lp_solve API also defines this alias
   typealias("REAL", "double")
 
 
   # All of the function signatures here come from 
   # http://lpsolve.sourceforge.net/5.5/lp_solveAPIreference.htm
 
-	# void lp_solve_version(int *majorversion, int *minorversion, int *release, int *build)
+  # void lp_solve_version(int *majorversion, int *minorversion, int *release, int *build)
   extern "void lp_solve_version(int *, int *, int *, int *)"
   # lprec *read_LP(char *filename, int verbose, char *lp_name)
-	extern "lprec *read_LP(char *, int , char *)"
-	# int solve(lprec *lp)
-	extern "int solve(lprec *)"
-	# unsigned char get_variables(lprec *lp, REAL *var);
-	extern "unsigned char get_variables(lprec *, REAL *)"
-	# int get_Ncolumns(lprec *lp);
-	extern "int get_Ncolumns(lprec *)"
-	# char *get_col_name(lprec *lp, int column);
-	extern "char *get_col_name(lprec *, int )"
-	# char *get_origcol_name(lprec *lp, int column);
-	extern "char *get_origcol_name(lprec *, int )"
-	# lprec *copy_lp(lprec *lp);
-	extern "lprec *copy_lp(lprec *)"
-	# void print_lp(lprec *lp);
-	extern "void print_lp(lprec *)"
-	# lprec *make_lp(int rows, int columns);
-	extern "lprec *make_lp(int, int)"
-	# void delete_lp(lprec *lp);
-	extern "void delete_lp(lprec *)"
-	# unsigned char set_binary(lprec *lp, int column, unsigned char must_be_bin);
-	extern "unsigned char set_binary(lprec *, int, unsigned char)"
-	# unsigned char set_col_name(lprec *lp, int column, char *new_name);
-	extern "unsigned char set_col_name(lprec *, int , char *)"
-	# unsigned char set_obj_fn(lprec *lp, REAL *row);
-	extern "unsigned char set_obj_fn(lprec *, REAL *)"
-	# unsigned char add_constraint(lprec *lp, REAL *row, int constr_type, REAL rh);
+  extern "lprec *read_LP(char *, int , char *)"
+  # int solve(lprec *lp)
+  extern "int solve(lprec *)"
+  # unsigned char get_variables(lprec *lp, REAL *var);
+  extern "unsigned char get_variables(lprec *, REAL *)"
+  # int get_Ncolumns(lprec *lp);
+  extern "int get_Ncolumns(lprec *)"
+  # char *get_col_name(lprec *lp, int column);
+  extern "char *get_col_name(lprec *, int )"
+  # char *get_origcol_name(lprec *lp, int column);
+  extern "char *get_origcol_name(lprec *, int )"
+  # lprec *copy_lp(lprec *lp);
+  extern "lprec *copy_lp(lprec *)"
+  # void print_lp(lprec *lp);
+  extern "void print_lp(lprec *)"
+  # lprec *make_lp(int rows, int columns);
+  extern "lprec *make_lp(int, int)"
+  # void delete_lp(lprec *lp);
+  extern "void delete_lp(lprec *)"
+  # unsigned char set_binary(lprec *lp, int column, unsigned char must_be_bin);
+  extern "unsigned char set_binary(lprec *, int, unsigned char)"
+  # unsigned char set_col_name(lprec *lp, int column, char *new_name);
+  extern "unsigned char set_col_name(lprec *, int , char *)"
+  # unsigned char set_obj_fn(lprec *lp, REAL *row);
+  extern "unsigned char set_obj_fn(lprec *, REAL *)"
+  # unsigned char add_constraint(lprec *lp, REAL *row, int constr_type, REAL rh);
   extern "unsigned char add_constraint(lprec *, REAL *, int, REAL)"
   # unsigned char set_row_name(lprec *lp, int row, char *new_name);
   extern "unsigned char set_row_name(lprec *, int , char *)"
@@ -122,14 +122,14 @@ module LPSolve
   extern "void set_minim(lprec *)"
   
   def version
-		maj = IntArg.malloc
-		min = IntArg.malloc
-		rel = IntArg.malloc
-		bld = IntArg.malloc
-					
-		LPSolve::lp_solve_version(maj, min, rel, bld)
-		version = "#{maj.val}.#{min.val}.#{rel.val} build #{bld.val}"
-		version
-	end
+    maj = IntArg.malloc
+    min = IntArg.malloc
+    rel = IntArg.malloc
+    bld = IntArg.malloc
+          
+    LPSolve::lp_solve_version(maj, min, rel, bld)
+    version = "#{maj.val}.#{min.val}.#{rel.val} build #{bld.val}"
+    version
+  end
   
 end

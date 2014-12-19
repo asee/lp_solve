@@ -14,23 +14,24 @@ include LPSolve
 
 class LPSelect
   
-	attr_reader :vars, :lp, :model_name, :results, :objective, :constraints, :objective_row
+  attr_reader :vars, :lp, :model_name, :results, :objective, :constraints, :objective_row
   CONSTRAINT_ROW = {:name => "", :vars => [], :op => nil, :target => nil} #our own little format
-	
-	
-	# Create a new selection equation, either by passing a list of variables
-	# corresponding to applicants, or by passing a YAML file or string that
-	# represents an equation serialized by this same model.
-	#
-	# Optionally it can load a file from disk in the lp format and solve it, 
-	# although many of the utilities for inspecting the equation and serializing
-	# it will be non-functional
+  
+  
+  # Create a new selection equation, either by passing a list of variables
+  # corresponding to applicants, or by passing a YAML file or string that
+  # represents an equation serialized by this same model.
+  #
+  # Optionally it can load a file from disk in the lp format and solve it, 
+  # although many of the utilities for inspecting the equation and serializing
+  # it will be non-functional
   def initialize(opts = {})
     
     # The objective is the overall equation to solve, in our case, the minimum
     # sum of each applicants rank
     @objective_row = {:direction => "min", :weights => {} }
     @constraints = [] #This will be filled with dups of CONSTRAINT_ROW
+    @var_struct = nil
     
     if opts[:filename] && File::exists?(opts[:filename])
       load_from_file(opts[:filename])
@@ -50,13 +51,13 @@ class LPSelect
   end
   
   def create_new(varnames)
-    @vars = varnames.map { |v| v.to_sym }
-	  cols = @vars.length
-	  @lp = LPSolve::make_lp(0, cols) 
-	  1.upto(cols) do |cnum| 
-	    cname = varnames[cnum-1] #For every column get the column name and index (NOT zero indexed)
-	    LPSolve::set_binary(@lp, cnum, 1) #Define the column to be binary
-	    LPSolve::set_col_name(@lp, cnum, cname.to_s) #Set the name to what we passed
+    self.vars = varnames
+    cols = @vars.length
+    @lp = LPSolve::make_lp(0, cols) 
+    1.upto(cols) do |cnum| 
+      cname = varnames[cnum-1] #For every column get the column name and index (NOT zero indexed)
+      LPSolve::set_binary(@lp, cnum, 1) #Define the column to be binary
+      LPSolve::set_col_name(@lp, cnum, cname.to_s) #Set the name to what we passed
     end    
   end
   
@@ -64,27 +65,30 @@ class LPSelect
     @lp = LPSolve::read_LP(filename, LPSolve::SEVERE, "")
     
     loc_lp = LPSolve::copy_lp(@lp) #We make a copy to avoid advancing internal pointers.
-		@vars = []
-		1.upto(get_Ncolumns) do |col|
-			@vars << LPSolve::get_origcol_name(loc_lp, col)
-		end
+    existing_vars = []
+    1.upto(get_Ncolumns) do |col|
+      existing_vars << LPSolve::get_origcol_name(loc_lp, col).to_s
+    end
+    self.vars = existing_vars
   end
   
   # Weights should be a hash with variable names as keys, and
   # individual multipliers as the values.  Eg, { "v1" => 10 }
   # would return a row like +10 v1
   def set_objective(weights, direction = :min)
-    obj_fn = [1.0]
-    
     weights = weights.inject({}) do |options, (key, value)|
-      options[(key.to_sym rescue key) || key] = value
+      options[key.to_sym] = value
       options
     end
     
+    obj_fn = build_empty_var_struct
+    obj_fn["zero_index"] = 1.0
     @vars.each do |var|
-      obj_fn << weights[var].to_f rescue 0.0
+      weight = weights[var] || 0.0
+      obj_fn[var.to_s] = weight
     end
-    LPSolve::set_obj_fn(@lp, obj_fn.to_ptr)
+    
+    LPSolve::set_obj_fn(@lp, obj_fn)
     
     if direction == :max
       LPSolve::set_maxim(@lp)
@@ -105,28 +109,22 @@ class LPSelect
       #--------------------
       #  Get the values
       #--------------------
+      retvals = build_empty_var_struct
     
-      #Determine how many results we expect
-  		col_pack = "D" * @vars.length
-		
-  		#Build a pointer to an array large enough to hold our results			
-  		retvals = DL.malloc(DL.sizeof(col_pack))
-  		retvals.struct!(col_pack, *@vars)
-		
-  		err = LPSolve::get_variables(@lp, retvals)
-		
-  		@results = {}
-  		@vars.each do |c|
-  			@results[c] = retvals[c].to_f
-  		end
-		
-  		#--------------------
+      err = LPSolve::get_variables(@lp, retvals)
+    
+      @results = {}
+      @vars.each do |c|
+        @results[c] = retvals[c.to_s].to_f
+      end
+    
+      #--------------------
       #  Set the objective (eg, final sum)
       #--------------------
-  		@objective = LPSolve::get_objective(@lp)
-		end
-		return solution
-		
+      @objective = LPSolve::get_objective(@lp)
+    end
+    return solution
+    
   end
   
   
@@ -144,14 +142,15 @@ class LPSelect
     varnames = rowdef[:vars].map! {|v| v.to_sym}
     
     #The API expects a 1 indexed array, so start with an empty item in row_constraints[0]
-    row_constraints = [0.0]
+    row_constraints = build_empty_var_struct
+    row_constraints["zero_index"] = 0.0
     @vars.each do |v|
       # Since we're only interested in binary columns, putting in a 1 or a zero is sufficient
       # to either add them to the constraint or not
-      row_constraints <<  (varnames.include?(v) ? 1.0 : 0.0)
+      row_constraints[v.to_s] =  (varnames.include?(v) ? 1.0 : 0.0)
     end
     
-    LPSolve::add_constraint(@lp, row_constraints.to_ptr, rowdef[:op], rowdef[:target].to_f)
+    LPSolve::add_constraint(@lp, row_constraints, rowdef[:op], rowdef[:target].to_f)
 
     # Every row has a name, and it's helpful if it suggests something about the constraint,
     # eg maine or minorities
@@ -225,7 +224,18 @@ class LPSelect
   end
   
   private 
+  
+    def build_empty_var_struct
+      var_struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE] * (@vars.length+1))
+      var_struct.assign_names(["zero_index"] + @vars.collect(&:to_s))
+      var_struct
+    end
+  
+    def vars=(new_vars)
+      @vars = new_vars.collect(&:to_sym)
+    end
+  
     def get_Ncolumns
-			@n_columns ||= LPSolve::get_Ncolumns(@lp)
-		end
+      @n_columns ||= LPSolve::get_Ncolumns(@lp)
+    end
 end
