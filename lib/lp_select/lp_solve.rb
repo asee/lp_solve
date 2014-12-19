@@ -1,7 +1,3 @@
-require 'dl/import'
-require 'dl/struct'
-
-
 # -----------------------------------------------
 #  
 #  This module uses Ruby's DL library to dynamically load
@@ -13,7 +9,7 @@ require 'dl/struct'
 # -----------------------------------------------
 
 module LPSolve
-  extend DL::Importer
+  extend Fiddle::Importer
   base = File.expand_path(File.join( File.dirname(__FILE__), "binaries") )
   err = nil
   ["liblpsolve55.so", "liblpsolve55.so-ux64", "liblpsolve55.dylib", "liblpsolve55.dylib.x86-64", "liblpsolve55.dylib-ppc", "lpsolve55.dll"].each do |lib|
@@ -86,13 +82,13 @@ module LPSolve
 	extern "lprec *read_LP(char *, int , char *)"
 	# int solve(lprec *lp)
 	extern "int solve(lprec *)"
-	#unsigned char get_variables(lprec *lp, REAL *var);
+	# unsigned char get_variables(lprec *lp, REAL *var);
 	extern "unsigned char get_variables(lprec *, REAL *)"
-	#int get_Ncolumns(lprec *lp);
+	# int get_Ncolumns(lprec *lp);
 	extern "int get_Ncolumns(lprec *)"
-	#char *get_col_name(lprec *lp, int column);
+	# char *get_col_name(lprec *lp, int column);
 	extern "char *get_col_name(lprec *, int )"
-	#char *get_origcol_name(lprec *lp, int column);
+	# char *get_origcol_name(lprec *lp, int column);
 	extern "char *get_origcol_name(lprec *, int )"
 	# lprec *copy_lp(lprec *lp);
 	extern "lprec *copy_lp(lprec *)"
@@ -122,7 +118,7 @@ module LPSolve
   extern "unsigned char write_lp(lprec *, char *)"
   # void set_maxim(lprec *lp);
   extern "void set_maxim(lprec *)"
-  #void set_minim(lprec *lp);
+  # void set_minim(lprec *lp);
   extern "void set_minim(lprec *)"
   
   def version
