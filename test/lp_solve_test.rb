@@ -4,7 +4,7 @@ class LpSolveTest < Test::Unit::TestCase
   
   # void lp_solve_version(int *majorversion, int *minorversion, int *release, int *build)
   def test_lp_solve_version
-    assert_equal "5.5.0 build 13", LPSolve.version
+    assert LPSolve.version.include?("5.5.0 build ")
   end
   
   # lprec *make_lp(int rows, int columns);
@@ -127,7 +127,7 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE])
+    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
     struct.assign_names(["spacer","fred", "bob"])
     struct["spacer"] = 1.0
     struct["fred"] = 0.0
@@ -145,7 +145,7 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE])
+    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
     struct.assign_names(["spacer","fred", "bob"])
     struct["spacer"] = 1.0
     struct["fred"] = 0.0
@@ -163,7 +163,7 @@ class LpSolveTest < Test::Unit::TestCase
     @lp = LPSolve::make_lp(0, 1)
     LPSolve::set_col_name(@lp, 1, "fred")
     
-    struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE])
+    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
     struct.assign_names(["basis", "fred"])
     struct["basis"] = 1.0
     struct["fred"] = 3.0
@@ -190,7 +190,7 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE])
+    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
     struct.assign_names(["spacer","fred", "bob"])
     struct["spacer"] = 1.0
     struct["fred"] = 0.0
@@ -213,7 +213,7 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE])
+    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
     struct.assign_names(["spacer","fred", "bob"])
     struct["spacer"] = 1.0
     struct["fred"] = 0.0
@@ -237,7 +237,7 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE, Fiddle::SIZEOF_DOUBLE])
+    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
     struct.assign_names(["spacer","fred", "bob"])
     struct["spacer"] = 1.0
     struct["fred"] = 0.0
@@ -247,7 +247,7 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_minim(@lp)
     solution = LPSolve::solve(@lp) 
     
-    retvals = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE])
+    retvals = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE])
     retvals.assign_names(["fred"])
     
     assert_nothing_raised do

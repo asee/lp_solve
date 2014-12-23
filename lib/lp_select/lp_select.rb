@@ -57,7 +57,7 @@ class LPSelect
     1.upto(cols) do |cnum| 
       cname = varnames[cnum-1] #For every column get the column name and index (NOT zero indexed)
       LPSolve::set_binary(@lp, cnum, 1) #Define the column to be binary
-      LPSolve::set_col_name(@lp, cnum, cname.to_s) #Set the name to what we passed
+      LPSolve::set_col_name(@lp, cnum, cname.to_s.dup) #Set the name to what we passed
     end    
   end
   
@@ -226,7 +226,7 @@ class LPSelect
   private 
   
     def build_empty_var_struct
-      var_struct = Fiddle::CStructEntity.malloc([Fiddle::SIZEOF_DOUBLE] * (@vars.length+1))
+      var_struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE] * (@vars.length+1))
       var_struct.assign_names(["zero_index"] + @vars.collect(&:to_s))
       var_struct
     end

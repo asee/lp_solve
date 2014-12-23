@@ -9,7 +9,7 @@
 # -----------------------------------------------
 
 module LPSolve
-  extend Fiddle::Importer
+  extend ExtFfnLib::Importer
   base = File.expand_path(File.join( File.dirname(__FILE__), "binaries") )
   err = nil
   ["liblpsolve55.so", "liblpsolve55.so-ux64", "liblpsolve55.dylib", "liblpsolve55.dylib.x86-64", "liblpsolve55.dylib-ppc", "lpsolve55.dll"].each do |lib|
@@ -121,7 +121,7 @@ module LPSolve
   # void set_minim(lprec *lp);
   extern "void set_minim(lprec *)"
   
-  def version
+  def self.version
     maj = IntArg.malloc
     min = IntArg.malloc
     rel = IntArg.malloc
