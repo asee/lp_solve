@@ -123,18 +123,14 @@ class LpSolveTest < Test::Unit::TestCase
 	# unsigned char add_constraint(lprec *lp, REAL *row, int constr_type, REAL rh);
   def test_add_constraint
     @lp = LPSolve::make_lp(0, 2)
-    LPSolve::set_col_name(@lp, 1, "fred")
-    LPSolve::set_col_name(@lp, 2, "bob")
     
-    #The API expects a 1 indexed array
-    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
-    struct.assign_names(["spacer","fred", "bob"])
-    struct["spacer"] = 1.0
-    struct["fred"] = 0.0
-    struct["bob"] = 1.0
-
-    assert_nothing_raised do
-      LPSolve::add_constraint(@lp, struct, LPSelect::EQ, 1.0.to_f)
+    #The API expects a 1 indexed array    
+    constraint_vars = [0, 0, 1]
+    FFI::MemoryPointer.new(:double, constraint_vars.size) do |p|
+      p.write_array_of_double(constraint_vars)
+      assert_nothing_raised do
+        LPSolve::add_constraint(@lp, p, LPSelect::EQ, 1.0.to_f)
+      end
     end
   end
   
@@ -145,13 +141,11 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
-    struct.assign_names(["spacer","fred", "bob"])
-    struct["spacer"] = 1.0
-    struct["fred"] = 0.0
-    struct["bob"] = 1.0
-    
-    LPSolve::add_constraint(@lp, struct, LPSelect::EQ, 1.0.to_f)
+    constraint_vars = [0, 0, 1]
+    FFI::MemoryPointer.new(:double, constraint_vars.size) do |p|
+      p.write_array_of_double(constraint_vars)
+      LPSolve::add_constraint(@lp, p, LPSelect::EQ, 1.0.to_f)
+    end
     
     assert_nothing_raised do
       LPSolve::set_row_name(@lp, 1, "onlyBob")
@@ -161,15 +155,14 @@ class LpSolveTest < Test::Unit::TestCase
   # unsigned char set_obj_fn(lprec *lp, REAL *row);
   def test_set_obj_fn
     @lp = LPSolve::make_lp(0, 1)
-    LPSolve::set_col_name(@lp, 1, "fred")
     
-    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
-    struct.assign_names(["basis", "fred"])
-    struct["basis"] = 1.0
-    struct["fred"] = 3.0
-    
-    assert_nothing_raised do
-      LPSolve::set_obj_fn(@lp, struct)
+    #The API expects a 1 indexed array
+    constraint_vars = [1.0, 3.0]
+    FFI::MemoryPointer.new(:double, constraint_vars.size) do |p|
+      p.write_array_of_double(constraint_vars)
+      assert_nothing_raised do
+        LPSolve::set_obj_fn(@lp, p)
+      end
     end
   end
   
@@ -190,13 +183,12 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
-    struct.assign_names(["spacer","fred", "bob"])
-    struct["spacer"] = 1.0
-    struct["fred"] = 0.0
-    struct["bob"] = 1.0
+    constraint_vars = [0, 0, 1]
+    FFI::MemoryPointer.new(:double, constraint_vars.size) do |p|
+      p.write_array_of_double(constraint_vars)
+      LPSolve::add_constraint(@lp, p, LPSelect::EQ, 1.0.to_f)
+    end
 
-    LPSolve::add_constraint(@lp, struct, LPSelect::EQ, 1.0.to_f)
     LPSolve::set_minim(@lp)
     
     assert_nothing_raised do
@@ -213,13 +205,12 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
-    struct.assign_names(["spacer","fred", "bob"])
-    struct["spacer"] = 1.0
-    struct["fred"] = 0.0
-    struct["bob"] = 1.0
-
-    LPSolve::add_constraint(@lp, struct, LPSelect::EQ, 1.0.to_f)
+    constraint_vars = [0, 0, 1]
+    FFI::MemoryPointer.new(:double, constraint_vars.size) do |p|
+      p.write_array_of_double(constraint_vars)
+      LPSolve::add_constraint(@lp, p, LPSelect::EQ, 1.0.to_f)
+    end
+    
     LPSolve::set_minim(@lp)
     solution = LPSolve::solve(@lp) 
     
@@ -237,22 +228,24 @@ class LpSolveTest < Test::Unit::TestCase
     LPSolve::set_col_name(@lp, 2, "bob")
     
     #The API expects a 1 indexed array
-    struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE, ExtFfnLib::SIZEOF_DOUBLE])
-    struct.assign_names(["spacer","fred", "bob"])
-    struct["spacer"] = 1.0
-    struct["fred"] = 0.0
-    struct["bob"] = 1.0
-
-    LPSolve::add_constraint(@lp, struct, LPSelect::EQ, 1.0.to_f)
+    constraint_vars = [0, 0, 1]
+    FFI::MemoryPointer.new(:double, constraint_vars.size) do |p|
+      p.write_array_of_double(constraint_vars)
+      LPSolve::add_constraint(@lp, p, LPSelect::EQ, 1.0.to_f)
+    end
+    
+    
     LPSolve::set_minim(@lp)
     solution = LPSolve::solve(@lp) 
     
-    retvals = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE])
-    retvals.assign_names(["fred"])
-    
-    assert_nothing_raised do
-      err = LPSolve::get_variables(@lp, retvals)
-      assert_not_nil retvals["fred"]
+    retvals = []
+    FFI::MemoryPointer.new(:double, 2) do |p|
+      assert_nothing_raised do
+        err = LPSolve::get_variables(@lp, p)
+      end
+      retvals = p.get_array_of_double(0,2)
     end
+    assert_not_nil retvals[0]
+    assert_equal 1.0, retvals[1]
   end
 end

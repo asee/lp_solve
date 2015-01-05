@@ -81,14 +81,16 @@ class LPSelect
       options
     end
     
-    obj_fn = build_empty_var_struct
-    obj_fn["zero_index"] = 1.0
+    obj_fn = [1.0] # placeholder for zero indexed array
     @vars.each do |var|
       weight = weights[var] || 0.0
-      obj_fn[var.to_s] = weight
+      obj_fn <<  weight
     end
     
-    LPSolve::set_obj_fn(@lp, obj_fn)
+    FFI::MemoryPointer.new(:double, obj_fn.size) do |p|
+      p.write_array_of_double(obj_fn)
+      LPSolve::set_obj_fn(@lp, p)
+    end
     
     if direction == :max
       LPSolve::set_maxim(@lp)
@@ -109,13 +111,16 @@ class LPSelect
       #--------------------
       #  Get the values
       #--------------------
-      retvals = build_empty_var_struct
-    
-      err = LPSolve::get_variables(@lp, retvals)
-    
       @results = {}
-      @vars.each do |c|
-        @results[c] = retvals[c.to_s].to_f
+      
+      retvals = []
+      FFI::MemoryPointer.new(:double, @vars.size) do |p|
+        if LPSolve::get_variables(@lp, p)
+          retvals = p.get_array_of_double(0, @vars.size)
+          @vars.each_with_index do |c, idx|
+            @results[c] = retvals[idx]
+          end
+        end
       end
     
       #--------------------
@@ -142,16 +147,18 @@ class LPSelect
     varnames = rowdef[:vars].map! {|v| v.to_sym}
     
     #The API expects a 1 indexed array, so start with an empty item in row_constraints[0]
-    row_constraints = build_empty_var_struct
-    row_constraints["zero_index"] = 0.0
+    row_constraints = [0.0]
     @vars.each do |v|
       # Since we're only interested in binary columns, putting in a 1 or a zero is sufficient
       # to either add them to the constraint or not
-      row_constraints[v.to_s] =  (varnames.include?(v) ? 1.0 : 0.0)
+      row_constraints << (varnames.include?(v) ? 1.0 : 0.0)
+    end
+
+    FFI::MemoryPointer.new(:double, row_constraints.size) do |p|
+      p.write_array_of_double(row_constraints)
+      LPSolve::add_constraint(@lp, p, rowdef[:op], rowdef[:target].to_f)
     end
     
-    LPSolve::add_constraint(@lp, row_constraints, rowdef[:op], rowdef[:target].to_f)
-
     # Every row has a name, and it's helpful if it suggests something about the constraint,
     # eg maine or minorities
     if rowdef[:name] == ""
@@ -224,12 +231,6 @@ class LPSelect
   end
   
   private 
-  
-    def build_empty_var_struct
-      var_struct = ExtFfnLib::CStructEntity.malloc([ExtFfnLib::SIZEOF_DOUBLE] * (@vars.length+1))
-      var_struct.assign_names(["zero_index"] + @vars.collect(&:to_s))
-      var_struct
-    end
   
     def vars=(new_vars)
       @vars = new_vars.collect(&:to_sym)

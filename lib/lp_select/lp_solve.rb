@@ -9,16 +9,16 @@
 # -----------------------------------------------
 
 module LPSolve
-  extend ExtFfnLib::Importer
+  extend FFI::Library
   base = File.expand_path(File.join( File.dirname(__FILE__), "binaries") )
   err = nil
   ["liblpsolve55.so", "liblpsolve55.so-ux64", "liblpsolve55.dylib", "liblpsolve55.dylib.x86-64", "liblpsolve55.dylib-ppc", "lpsolve55.dll"].each do |lib|
     begin 
       err = nil
-      dlload File.join(base, lib) 
+      ffi_lib File.join(base, lib) 
       break
-    rescue
-      err = $!  
+    rescue LoadError => e
+      err = e
     end
   end
   raise "Could not find suitable liblpsolve55 library #{err}" unless err.nil?
@@ -60,76 +60,87 @@ module LPSolve
   FEASFOUND = 12
   NOFEASFOUND = 13
 
-  # used where we pass a pointer to a long which gets modified in the call
-  # and where we need to actually read the modified value within Ruby
-  IntArg = struct [
-      "int val"
-  ]
-
-  #Hold the C pointer to the lprec
-  typealias("lprec*", "long")
-  
-  #The lp_solve API also defines this alias
-  typealias("REAL", "double")
+  typedef :double, :REAL
+  typedef :long, :lprec
 
 
   # All of the function signatures here come from 
   # http://lpsolve.sourceforge.net/5.5/lp_solveAPIreference.htm
 
   # void lp_solve_version(int *majorversion, int *minorversion, int *release, int *build)
-  extern "void lp_solve_version(int *, int *, int *, int *)"
+  attach_function :lp_solve_version, [:pointer, :pointer, :pointer, :pointer], :void
+  
   # lprec *read_LP(char *filename, int verbose, char *lp_name)
-  extern "lprec *read_LP(char *, int , char *)"
+  attach_function :read_LP, [:string, :int, :string], :pointer
+  
   # int solve(lprec *lp)
-  extern "int solve(lprec *)"
+  attach_function :solve, [:pointer], :int
+  
   # unsigned char get_variables(lprec *lp, REAL *var);
-  extern "unsigned char get_variables(lprec *, REAL *)"
+  attach_function :get_variables, [:pointer, :pointer], :char
+  
   # int get_Ncolumns(lprec *lp);
-  extern "int get_Ncolumns(lprec *)"
+  attach_function :get_Ncolumns, [:pointer], :int
+  
   # char *get_col_name(lprec *lp, int column);
-  extern "char *get_col_name(lprec *, int )"
+  attach_function :get_col_name, [:pointer, :int], :string
+  
   # char *get_origcol_name(lprec *lp, int column);
-  extern "char *get_origcol_name(lprec *, int )"
+  attach_function :get_origcol_name, [:pointer, :int], :string
+    
   # lprec *copy_lp(lprec *lp);
-  extern "lprec *copy_lp(lprec *)"
+  attach_function :copy_lp, [:pointer], :pointer
+  
   # void print_lp(lprec *lp);
-  extern "void print_lp(lprec *)"
+  attach_function :print_lp, [:pointer], :void
+  
   # lprec *make_lp(int rows, int columns);
-  extern "lprec *make_lp(int, int)"
+  attach_function :make_lp, [:int, :int], :pointer
+  
   # void delete_lp(lprec *lp);
-  extern "void delete_lp(lprec *)"
+  attach_function :delete_lp, [:pointer], :void
+  
   # unsigned char set_binary(lprec *lp, int column, unsigned char must_be_bin);
-  extern "unsigned char set_binary(lprec *, int, unsigned char)"
+  attach_function :set_binary, [:pointer, :int, :char], :char
+  
   # unsigned char set_col_name(lprec *lp, int column, char *new_name);
-  extern "unsigned char set_col_name(lprec *, int , char *)"
+  attach_function :set_col_name, [:pointer, :int, :string], :char
+  
   # unsigned char set_obj_fn(lprec *lp, REAL *row);
-  extern "unsigned char set_obj_fn(lprec *, REAL *)"
+  attach_function :set_obj_fn, [:pointer, :pointer], :char
+  
   # unsigned char add_constraint(lprec *lp, REAL *row, int constr_type, REAL rh);
-  extern "unsigned char add_constraint(lprec *, REAL *, int, REAL)"
+  attach_function :add_constraint, [:pointer, :pointer, :int, :REAL], :char
+  
   # unsigned char set_row_name(lprec *lp, int row, char *new_name);
-  extern "unsigned char set_row_name(lprec *, int , char *)"
+  attach_function :set_row_name, [:pointer, :int, :string], :char
+  
   # REAL get_objective(lprec *lp);
-  extern "REAL get_objective(lprec *)"
+  attach_function :get_objective, [:pointer], :REAL
+  
   # void set_verbose(lprec *lp, int verbose);
-  extern "void set_verbose(lprec *, int )"
+  attach_function :set_verbose, [:pointer, :int], :void
+  
   # unsigned char set_lp_name(lprec *lp, char *lpname);
-  extern "unsigned char set_lp_name(lprec *, char *)"
+  attach_function :set_lp_name, [:pointer, :string], :char
+  
   # unsigned char write_lp(lprec *lp, char *filename);
-  extern "unsigned char write_lp(lprec *, char *)"
+  attach_function :write_lp, [:pointer, :string], :char
+  
   # void set_maxim(lprec *lp);
-  extern "void set_maxim(lprec *)"
+  attach_function :set_maxim, [:pointer], :void
+  
   # void set_minim(lprec *lp);
-  extern "void set_minim(lprec *)"
+  attach_function :set_minim, [:pointer], :void
   
   def self.version
-    maj = IntArg.malloc
-    min = IntArg.malloc
-    rel = IntArg.malloc
-    bld = IntArg.malloc
-          
-    LPSolve::lp_solve_version(maj, min, rel, bld)
-    version = "#{maj.val}.#{min.val}.#{rel.val} build #{bld.val}"
-    version
+    maj_ptr = FFI::MemoryPointer.new(:pointer, 1)
+    min_ptr = FFI::MemoryPointer.new(:pointer, 1)
+    rel_ptr = FFI::MemoryPointer.new(:pointer, 1)
+    bld_ptr = FFI::MemoryPointer.new(:pointer, 1)
+    LPSolve::lp_solve_version(maj_ptr, min_ptr, rel_ptr, bld_ptr)
+    
+    "#{maj_ptr.read_int}.#{min_ptr.read_int}.#{rel_ptr.read_int} build #{bld_ptr.read_int}"
   end
   
 end
